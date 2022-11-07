@@ -1,0 +1,82 @@
+---
+title: "CANSSI Datathon guidelines"
+author: "Marie Auger-Methe, Vianey Leos Barajas, Kathryn Flowers, Yannis Papastamatiou"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+**When:** Thursday, Nov 10th, from 9 am -12 pm
+
+**Where:** 700 University Ave, 9th floor, Room 9195/9199
+
+**Schedule:**
+
+- 9:00-9:15: Kathryn Flowers presents the data and problem
+- 9:15-9:30: Vianey Leos Barajas presents the guidelines
+- 9:30-11:45: Work on project
+- 11:45-12:00: Presentations
+
+## Data availability statement
+
+The dataset for this activity is available in the file *Stingray10_updated.csv* shared via Github (https://github.com/vianeylb/CANSSI_CRT). It can used our CANSSI CRT meeting and shared for educational purposes with accreditation (K. Flowers, Y. Papastamatiou, D. Chapman/Florida International University). It cannot be used for any publication without written permission. Please contact Dr. Yannis Papastamatiou (ypapasta@fiu.edu) and Kathryn Flowers (katie.flowers.90@gmail.com) for more information. 
+
+## Description of the dataset
+
+The biologging data of one southern stingray from Belize collected by Dr. Yannis Papastamatiou, Kathryn Flowers, and team. The data set spans ~ 2 days. The tag has collected 3-axial dynamic accelerometer data, external temperature, and depth at 25 Hz . To simplify the analysis for this activity, we will use a summary measure that combines the three axes of the accelerometer data and we are averaging the 25Hz data to have one value every minute. Specifically, the dataset we will use contain these variables:
+
+- **Date_Time:** Local time associated with each data point. Note that we have averaged the data over a 1 min window and the time represents the beginning of that window. 
+- **Depth:** Depth in m, which could be the depth in the water column, or, given that these animals spent time at the bottom, a measure of whether they are on deep substrate or shallow substrate. It is averaged over 1 min.
+- **Temp:** Temperature (C), which is the external water temperature that the ray is experiencing. It is averaged over 1 min.
+- **ODBA:** Overall Dynamic Body Acceleration (OBDA), which is the sum of the three orthogonal axes of absolute dynamic acceleration and is a proxy for energy expenditure/activity. It is averaged over 1 min. 
+
+The main movement variable we will model is going to be ODBA. There is no missing data. 
+
+## Quick data exploration
+
+Let's read the data into R and have a quick peak at it.
+```{r data.load}
+stingray <- read.csv("Stingray10_updated.csv")
+head(stingray)
+```
+We can see the four variables described above.
+
+The column `Date_Time` should be chaneg into an time variable, as follow:
+
+```{r data.formatting}
+stingray$Date_Time <- as.POSIXct(stingray$Date_Time, tz="America/Belize")
+```
+
+
+Let's quickly visualize it.
+
+```{r data.vis}
+# ODBA through time
+plot(stingray$ODBA ~ stingray$Date_Time, 
+     ty="l", las=1,
+     xlab= "Time", ylab="ODBA")
+# Depth through time
+plot(stingray$Depth ~ stingray$Date_Time, 
+     ty="l", las=1,
+     xlab= "Time", ylab="Depth (m)")
+# Temperature through time
+plot(stingray$Temp ~ stingray$Date_Time, 
+     ty="l", las=1,
+     xlab= "Time", ylab="Temperature (C)")
+```
+
+
+## Exercise
+
+For all questions the goals are to provide a road map of how to tackle the question, attempt to complete at least the first step of your road map, and provide interpretation of the results. Make a quick 5-minute presentation explaining what your team did.
+
+### Questions:
+
+**Team 1:** Stingrays inhabit various depths for different behavioral reasons. For example, they may forage in shallow depths, and seek refuge in deeper depths. We are interested in how behaviour changes with response to depth. Specifically, we want to know: what’s the best way to include depth in the analysis?  Hint 1: depth could be one of the response variables in addition to ODBA, or it could be a covariate. Hint 2: it could be depth itself or vertical displacement. Hint 3: if using depth as covariate, it could affect the transition probabilities or emission probabilities. 
+
+**Team 2:** Many species have regular daily patterns, where they may be more active during the day or at night. What would be the best way to identify and describe these potential diel patterns? Hint 1: incorporating differences across different parts of the day can be done by constructing a categorical variable that denotes, day vs night. Hint 2: a categorical variable can lead to a sharp contrast in what we expect to happen during day and night, if we transform time by constructing the following variables, sin(2πt/1440) and cos(2πt/1440), we have a curve that accounts for a daily pattern. Hint 3: the denominator of 1440 denotes the number of minutes in a day, such that one cycle corresponds to a daily pattern, how else could we extend the diel pattern we estimate? 
+
+**Team 3:** Water temperature could be associated with the activity of the stingray in many ways. Stingray are ectotherms, meaning that their body temperature is regulated by the external environment, so one could think that water temperature could affect their activity level. In contrast, water temperature could be associated with the habitat in which the ray is eating. Deeper water for example is associated with cold waters. Keeping this information in mind, what would be the best way to model the relationship between water temperature and activity? Is it possible to disentangle whether it is more likely to be associated with one of these explanations with the data we have? Hint 1: if temperature affects their activity level, we would expect that higher water temperature would increase their activity level. Hint 2: they forage in shallow waters, which are generally warmer. Hint 3: could interactions between water temperature and depth be useful?

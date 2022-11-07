@@ -1,0 +1,13 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+
+.DS_Store
+
+**/figure-html/*
+**/html/*
+
+**/latex/*
+**/figure-latex/*

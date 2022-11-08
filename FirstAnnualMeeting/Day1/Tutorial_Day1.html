@@ -12,7 +12,7 @@
 <meta name="author" content="Marco Gallegos Herrada" />
 
 
-<title>Hidden Markov Models: Generation of hidden and observable process, forward and backward algorithm, and computation of likelihood</title>
+<title>HMMs: Generation of hidden and observable process, forward algorithm, and computation of the likelihood</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -423,7 +423,7 @@ pre code {
 
 
 
-<h1 class="title toc-ignore">Hidden Markov Models: Generation of hidden and observable process, forward and backward algorithm, and computation of likelihood</h1>
+<h1 class="title toc-ignore">HMMs: Generation of hidden and observable process, forward algorithm, and computation of the likelihood</h1>
 <h4 class="author">Marco Gallegos Herrada</h4>
 <h4 class="date">8/11/2022</h4>
 
@@ -442,25 +442,24 @@ pre.numberSource code
 <p>The goal of this tutorial is to implement the theory behind hidden Markov models and see how to generate a sequence of hidden states as well as simulate observations from the corresponding state-dependen distributions. More precisely, we will generate observations from a 2-state HMM where the state-dependent distributions correspond to Poisson distributions. Throughout this tutorial, we will work with an homogeneous and stationary Markov process for the hidden process.</p>
 <p>The primary learning objectives in this first tutorial are to:</p>
 <ol style="list-style-type: decimal">
-<li>Generate a sequence of hidden states given an initial distribution and t.p.m.,</li>
+<li>Generate a sequence of hidden states given an initial distribution <span class="math inline">\(\pi\)</span>, t.p.m. <span class="math inline">\(\Gamma\)</span> and vector of parameters <span class="math inline">\(\Lambda\)</span> (i.e. <span class="math inline">\(\eta = (\pi,\Gamma,\Lambda)\)</span>),</li>
 <li>Simulate a sequence of observations from the state-dependent distributions given a sequence of hidden states,</li>
 <li>Explore how to visualize both hidden and observable process,</li>
-<li>Implementation of the forward and backward algorithms for the computation of the probabilities</li>
+<li>Implementation of the forward algorithm for the computation of the probabilities</li>
 </ol>
 <p><span class="math display">\[\begin{align*}
-  \alpha_t(i) &amp;= P(X_1=x_1,\ldots,X_t=x_t\mid C_t = i)\\ 
-  \beta_t(i) &amp;= P(X_1=x_1,\ldots,X_t = x_t, C_t = i),
+  \alpha_{j,t} &amp;= P(Y_{1:t}=y_{1:t} \mid X_t = j),\\ 
   \end{align*}\]</span></p>
 <ol start="5" style="list-style-type: decimal">
-<li>The computation of the likelihood <span class="math inline">\(L_T\)</span>.</li>
+<li>The computation of the likelihood evaluated in <span class="math inline">\(\eta\)</span>, <span class="math inline">\(\mathcal{L}(\eta)\)</span>.</li>
 </ol>
 </div>
 <div id="model" class="section level1" number="2">
 <h1><span class="header-section-number">2</span> Model</h1>
-<p>Let <span class="math inline">\(\delta = (\delta_1, \delta_2)\)</span> the initial distribution of our Markov chain, such that</p>
+<p>Let <span class="math inline">\(\pi = (\pi_1, \pi_2)\)</span> the initial distribution of our Markov chain, such that</p>
 <p><span class="math display">\[\begin{align*}
-  \delta_1 = P(C_1 = 1) = 2/3\\
-  \delta_2 = P(C_1 = 2) = 1/3
+  \pi_1 = P(X_1 = 1) = 2/3\\
+  \pi_2 = P(X_1 = 2) = 1/3
 \end{align*}\]</span></p>
 <p>As well, let’s consider the transition probability matrix with the following values</p>
 <p><span class="math display">\[\begin{align*}
@@ -472,8 +471,8 @@ pre.numberSource code
 \end{align*}\]</span></p>
 <p>We will assume</p>
 <p><span class="math display">\[\begin{align*}
-f(x_t \mid C_t = 1) &amp;\sim Poisson(3),\\
-f(x_t \mid C_t = 2) &amp;\sim Poisson(10).
+f(y_t \mid X_t = 1) &amp;\sim Poisson(\lambda_1 = 3),\\
+f(y_t \mid X_t = 2) &amp;\sim Poisson(\lambda_2 = 10).
 \end{align*}\]</span></p>
 </div>
 <div id="data-generation" class="section level1" number="3">
@@ -481,7 +480,7 @@ f(x_t \mid C_t = 2) &amp;\sim Poisson(10).
 <p><strong>a)</strong> Simulate 100 states from a 2-state Markov chain with initial distribution and t.p.m. as provided above. For the time <span class="math inline">\(t=1\)</span> (initial time), use <code>set.seed(10)</code> and for <span class="math inline">\(t=2,\ldots,100\)</span>, use <code>set.seed(20)</code>. Store your state sequence in a variable called <code>state_seq</code>.</p>
 <p><strong>b)</strong> Visualize the generated state sequence.</p>
 <p><strong>c)</strong> Simulate 100 observations from the state-dependent distributions given the hidden states that you just generated. Set <code>set.seed(30)</code> to generate such observations and store them in a vector called <code>obs_seq</code>.</p>
-<p><strong>d)</strong> Visualize the data generated from the state-dependent distributions, along with the lambda values.</p>
+<p><strong>d)</strong> Visualize the data generated from the state-dependent distributions, along with the parameters values <span class="math inline">\(\lambda_1, \lambda_2\)</span>.</p>
 <div id="lets-get-to-do-some-code-first-part" class="section level2" number="3.1">
 <h2><span class="header-section-number">3.1</span> Let’s get to do some code! (First part)</h2>
 <p><strong>1a)</strong> A 2-state Markov chain with delta and t.p.m. provided previously</p>
@@ -521,54 +520,50 @@ f(x_t \mid C_t = 2) &amp;\sim Poisson(10).
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="do">############################################################################</span></span></code></pre></div>
 </div>
 </div>
-<div id="the-forward-and-backward-algorithms.-computation-of-l_t." class="section level1" number="4">
-<h1><span class="header-section-number">4</span> The forward and backward algorithms. Computation of <span class="math inline">\(L_T\)</span>.</h1>
-<p><strong>a)</strong> Create a function that computes the forward algorithm <span class="math inline">\(\alpha_t\)</span> for any time <span class="math inline">\(t = 1,...,T\)</span>.</p>
-<p><strong>b)</strong> Create a function that computes the backward algorithm <span class="math inline">\(\beta&#39;_t\)</span> for any time <span class="math inline">\(t = 1,...,T\)</span>.</p>
-<p><strong>c)</strong> Since the likelihood is a product of matrices, not of scalars, it is not possible to circumvent numerical underflow simply by computing the log of the likelihood as the sum of logs of its factors. To overcome this issue, we can compute the logarithm of <span class="math inline">\(L_T\)</span> by using a strategy of scaling the vector of forward probabilities <span class="math inline">\(\alpha_t\)</span>. Effectively we scale the
+<div id="the-forward-algorithm.-computation-of-mathcalleta." class="section level1" number="4">
+<h1><span class="header-section-number">4</span> The forward algorithm. Computation of <span class="math inline">\(\mathcal{L}(\eta)\)</span>.</h1>
+<p><strong>a)</strong> Let’s recall that the forward variables <span class="math inline">\(\alpha_t\)</span> are defined as</p>
+<p><span class="math display">\[\begin{align*}
+    \boldsymbol{\alpha}_1 &amp;= \boldsymbol{\pi}\mathbf{P}(y_1),\\
+\end{align*}\]</span>
+and
+<span class="math display">\[\begin{align*}
+    \boldsymbol{\alpha}_t = \boldsymbol{\pi}\mathbf{P}(y_1)\boldsymbol{\Gamma}\mathbf{P}(y_2) \cdots \boldsymbol{\Gamma}\mathbf{P}(y_t) &amp;= \boldsymbol{\alpha}_{t-1}\Gamma P(y_t) \quad  \text{for $t&gt;1$}. 
+\end{align*}\]</span></p>
+<p>Create a function that computes the forward algorithm <span class="math inline">\(\alpha_t\)</span> for any time <span class="math inline">\(t = 1,...,T\)</span>.</p>
+<p><strong>b)</strong> Since the likelihood is a product of matrices, not of scalars, it is not possible to circumvent numerical underflow simply by computing the log of the likelihood as the sum of logs of its factors. To overcome this issue, we can compute the logarithm of <span class="math inline">\(\mathcal{\eta}\)</span> by using a strategy of scaling the vector of forward probabilities <span class="math inline">\(\alpha_t\)</span>. Effectively we scale the
 vector <span class="math inline">\(\alpha_t\)</span> at each time <span class="math inline">\(t\)</span> so that its elements add to 1, keeping track of
 the sum of the logs of the scale factors thus applied.</p>
-<p>More formally, for each <span class="math inline">\(t=1,\ldots,T\)</span>, let’s define the vector</p>
+<p>More formally, for each <span class="math inline">\(t=0,\ldots,T\)</span>, let’s define the vector</p>
 <p><span class="math display">\[\begin{align*}
   \phi_t = \alpha_t/w_t
 \end{align*}\]</span></p>
-<p>where <span class="math inline">\(w_t = \sum_i = \alpha_t(i) = \alpha_t 1&#39;\)</span>. It follows from the definition of <span class="math inline">\(\phi_t\)</span> and <span class="math inline">\(w_t\)</span> the following properties:</p>
+<p>where <span class="math inline">\(w_t = \sum_i = \alpha_{i,t} = \alpha_t 1&#39;\)</span>, and define <span class="math inline">\(w_0 = 1\)</span>, <span class="math inline">\(\alpha_0 = \pi\)</span>. It follows from the definition of <span class="math inline">\(\phi_t\)</span> and <span class="math inline">\(w_t\)</span> the following properties:</p>
 <p><span class="math display">\[\begin{align*}
-  w_1 = \alpha_0 1&#39; &amp;= \delta 1&#39; = 1\\
-  \phi_1 &amp;= \delta\\
-  w_t\phi_t &amp;= w_{t-1}\phi_{t-1} \Gamma P(x_t)\\
-  L_T = \alpha_T 1&#39; &amp;= w_T (\phi_T 1&#39;) = w_T.
+  w_0 = \alpha_0 1&#39; &amp;= \delta 1&#39; = 1\\
+  \phi_0 &amp;= \delta\\
+  w_t\phi_t &amp;= w_{t-1}\phi_{t-1} \Gamma P(y_t)\\
+  \mathcal{L}(\eta) = \alpha_T 1&#39; &amp;= w_T (\phi_T 1&#39;) = w_T.
 \end{align*}\]</span></p>
 <p>Hence <span class="math inline">\(\displaystyle L_T = w_T = \prod_{i=1} ^{T} (w_t/w_{t-1})\)</span>. From the third equation above, it follows that</p>
 <p><span class="math display">\[\begin{align*}
-  w_t = w_{t-1} (\phi_{t-1} \Gamma P(x_t) 1&#39;),
+  w_t = w_{t-1} (\phi_{t-1} \Gamma P(y_t) 1&#39;),
 \end{align*}\]</span></p>
 <p>and so we conclude</p>
 <p><span class="math display">\[\begin{align*}
-  \displaystyle  log(L_T) = \sum_{i=1}^{T} log(w_t / w_{t-1}) = \sum_{t=1}^{T} log((\phi_{t-1} \Gamma P(x_t) 1&#39;)).
+  \displaystyle  l(\eta) = log(\mathcal{L}(\eta)) = \sum_{i=1}^{T} log(w_t / w_{t-1}) = \sum_{t=1}^{T} log((\phi_{t-1} \Gamma P(y_t) 1&#39;)).
 \end{align*}\]</span></p>
 <p>Compute the log-likelihood using the scale vector strategy.</p>
-<p><strong>d)</strong> Show that, for <span class="math inline">\(t=43\)</span>, in effect <span class="math inline">\(\alpha_{43}\beta&#39;_{43} = L_T\)</span>.</p>
 <div id="lets-get-to-do-some-code-second-part" class="section level2" number="4.1">
 <h2><span class="header-section-number">4.1</span> Let’s get to do some code! (Second part)</h2>
 <p><strong>2a)</strong> Create a function that computes the forward algorithm for any time <span class="math inline">\(t = 1,...,T\)</span>.</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="do">################################################################################</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="do">### Include your function that computes the forward algorithm for any t here </span><span class="al">###</span></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="do">################################################################################</span></span></code></pre></div>
-<p><strong>2b)</strong> Create a function that computes the backward algorithm <span class="math inline">\(\beta&#39;_t\)</span> for any time <span class="math inline">\(t = 1,...,T\)</span>.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="do">#######################################################################</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="do">### Include your function that computes the backward algorithm here </span><span class="al">###</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="do">#######################################################################</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="do">### Tip: Compute (beta_t)&#39; it&#39;s easier than computing beta_t!</span></span></code></pre></div>
-<p><strong>2c)</strong> Compute the log-likelihood using the scale vector strategy.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="do">############################################################################################</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="do">### Include your fct that computes the log-likehood using the scale vector strategy here </span><span class="al">###</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="do">############################################################################################</span></span></code></pre></div>
-<p><strong>2d)</strong> Show that, for <span class="math inline">\(t=43\)</span>, in effect <span class="math inline">\(\alpha_{43}\beta&#39;_{43} = L_T\)</span>.</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="do">##############################</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="do">### Include your code here </span><span class="al">###</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="do">##############################</span></span></code></pre></div>
+<p><strong>2b)</strong> Compute the log-likelihood using the scale vector strategy.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="do">############################################################################################</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="do">### Include your fct that computes the log-likehood using the scale vector strategy here </span><span class="al">###</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="do">############################################################################################</span></span></code></pre></div>
 </div>
 </div>
 

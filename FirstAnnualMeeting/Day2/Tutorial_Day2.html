@@ -478,15 +478,15 @@ pre.numberSource code
 <p>It’s pausible that, when working with time series data, some observations are missing. However, in the case of HMM, the adjustemnt of the likelihood computation if data are missing turns out to be relatively simple.</p>
 <p>Let’s consider, for example, that one has available the observations <span class="math inline">\(x_1, x_3,x_6,x_8,x_{9},\ldots, x_{T}\)</span> of an HMM, but <span class="math inline">\(x_2,x_4,x_5,x_7\)</span> are missing. Then the likelihood of the observation is given by</p>
 <p><span class="math display">\[\begin{align*}
-  P(X_1=x_1 &amp;, X_3=x_3,X_6=x_6,X_8=x_8,X_{9}=x_{9},\ldots, X_T=x_{T})\\ 
-  = &amp;\sum \delta_{c_1}\gamma_{c_1,c_3}(2)\gamma_{c_3,c_6}(3)\gamma_{c_6,c_8}(2)\gamma_{c_8,c_9}\cdots,\gamma_{c_{T-1},c_T}\\
-  &amp;\times p_{c_1}(x_1)p_{c_3}(x_3)p_{c_6}(x_6)p_{c_8}(x_8)\cdots p_T(x_T)
+  P(Y_1=y_1 &amp;, Y_3=y_3,Y_6=y_6,Y_8=y_8,Y_{9}=y_{9},\ldots, Y_T=y_{T})\\ 
+  = &amp;\sum \delta_{x_1}\gamma_{x_1,x_3}(2)\gamma_{x_3,x_6}(3)\gamma_{x_6,x_8}(2)\gamma_{x_8,x_9}\cdots,\gamma_{x_{T-1},x_T}\\
+  &amp;\times p_{x_1}(y_1)p_{x_3}(y_3)p_{x_6}(y_6)p_{x_8}(y_8)\cdots p_{x_T}(y_T)
 \end{align*}\]</span></p>
-<p>where <span class="math inline">\(\gamma_{ij}(k)\)</span> denotes a <span class="math inline">\(k-\)</span>step transition probability, and the sum is taken over all indices <span class="math inline">\(c_t\)</span> other than <span class="math inline">\(c_2,c_4,c_5,c_7\)</span>. But this is in fact</p>
+<p>where <span class="math inline">\(\gamma_{ij}(k)\)</span> denotes a <span class="math inline">\(k-\)</span>step transition probability, and the sum is taken over all indices <span class="math inline">\(x_t\)</span> other than <span class="math inline">\(x_2,x_4,x_5,x_7\)</span>. But this is in fact</p>
 <p><span class="math display">\[\begin{align*}
-  &amp;= \delta P(x_1)\Gamma^2 P(x_3) \Gamma^{3} P(x_6) \Gamma^{2} P(x_8) \Gamma P(x_9) \cdots \Gamma P(x_T)1&#39;.
+  &amp;= \pi P(y_1)\Gamma^2 P(y_3) \Gamma^{3} P(y_6) \Gamma^{2} P(y_8) \Gamma P(y_9) \cdots \Gamma P(y_T)1&#39;.
 \end{align*}\]</span></p>
-<p>From this, we can conclude that, in general, in the expression for the likelihood the diagonal matrices <span class="math inline">\(P(x_t)\)</span> corresponding to missing observations <span class="math inline">\(x_t\)</span> can be replaced by the identity matrix!</p>
+<p>From this, we can conclude that, in general, in the expression for the likelihood the diagonal matrices <span class="math inline">\(P(y_t)\)</span> corresponding to missing observations <span class="math inline">\(y_t\)</span> can be replaced by the identity matrix!</p>
 <p>Given the above, now let’s consider our original sequence of observations, but now we will assume that there’s some missing observations:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">50</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>missing_id <span class="ot">=</span> <span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span>ntimes,<span class="dv">30</span>)</span>
@@ -509,15 +509,15 @@ pre.numberSource code
 <h2><span class="header-section-number">2.2</span> The likelihood when observations are interval-censored</h2>
 <p>Assume that some of the missing observations are interval-censored. For instance, the value of <span class="math inline">\(x_t\)</span> may be known only for <span class="math inline">\(t \neq 1,3,8\)</span>, with the information</p>
 <p><span class="math display">\[\begin{align*}
-  x_1 \leq 5,\\
-  2 \leq x_3 \leq 3\\
-  x_8 &gt; 10,
+  y_1 \leq 5,\\
+  2 \leq y_3 \leq 3\\
+  y_8 &gt; 10,
 \end{align*}\]</span>
-available about the remaining observations. In this scenario one replaces the diagonal matrices <span class="math inline">\(P(x_i)\)</span> <span class="math inline">\((i = 1,3,8)\)</span> in the likelihood expression by the matrices</p>
+available about the remaining observations. In this scenario one replaces the diagonal matrices <span class="math inline">\(P(y_i)\)</span> <span class="math inline">\((i = 1,3,8)\)</span> in the likelihood expression by the matrices</p>
 <p><span class="math display">\[\begin{align*}
-  \text{diag} (P(X_1 \leq 5 \mid C_1 = 1), P(X_1 \leq 5 \mid C_1 = 2)),\\
-  \text{diag} (P(2 \leq X_2 \leq 3 \mid C_1 = 1), P(2 \leq X_2 \leq 3 \leq 5 \mid C_1 = 2)),\\
-  \text{diag} (P(X_8 &gt; 10 \mid C_1 = 1), P(X_8 &gt; 10 \mid C_1 = 2)).
+  \text{diag} (P(Y_1 \leq 5 \mid X_1 = 1), P(Y_1 \leq 5 \mid X_1 = 2)),\\
+  \text{diag} (P(2 \leq Y_2 \leq 3 \mid X_1 = 1), P(2 \leq Y_2 \leq 3 \leq 5 \mid X_1 = 2)),\\
+  \text{diag} (P(Y_8 &gt; 10 \mid X_1 = 1), P(Y_8 &gt; 10 \mid X_1 = 2)).
 \end{align*}\]</span></p>
 <p>Compute the likelihood of the observations given the information above, and the observation sequence is <span class="math inline">\(T=10\)</span>. Compare the likelihood of the first 10 observations but assuming that all of these are observed. Which likelihood is bigger and why?</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="do">#################################################################</span></span>
@@ -696,14 +696,14 @@ available about the remaining observations. In this scenario one replaces the di
 <h2><span class="header-section-number">5.1</span> Local Decoding</h2>
 <p>From the introduction of HMM previously provided, we know that for every <span class="math inline">\(t=1,\ldots , T\)</span></p>
 <p><span class="math display">\[\begin{align*}
-  \alpha_{t}(i)\beta_{t}(i) = P(X_1=x_1,\ldots X_T = x_T , C_t = i).
+  \alpha_{i,t}\beta_{i,t} = P(Y_{1:T}=y_{1:T} , X_t = i).
 \end{align*}\]</span></p>
-<p>And thus, the conditional distribution of <span class="math inline">\(C_t\)</span> given the observations can be obtained as</p>
+<p>And thus, the conditional distribution of <span class="math inline">\(X_t\)</span> given the observations can be obtained as</p>
 <p><span class="math display">\[\begin{align*}
-  P(C_t = i \mid X_1 = x_1 ,\ldots, X_T = x_T) &amp;= \dfrac{P(C_t = i, X_1 = x_1 ,\ldots, X_T = x_T)}{P(X_1 = x_1 ,\ldots, X_T = x_T)}\\
-  &amp;= \dfrac{\alpha_t(i)\beta_t(i)}{L_T}.
+  P(X_t = i \mid Y_{1:T} = y_{1:T}) &amp;= \dfrac{P(X_t = i, Y_{1:T} = y_{1:T})}{P(Y_{1:T} = y_{1:T})}\\
+  &amp;= \dfrac{\alpha_t(i)\beta_t(i)}{\mathcal{L}}.
 \end{align*}\]</span></p>
-<p>Use your functions for computing the forward and backward algorithms from previous tutorial to estimate <span class="math inline">\(P(C_t = i \mid X_1 = x_1 ,\ldots, X_T = x_T)\)</span> for every time <span class="math inline">\(t=1,\ldots, T\)</span> and every state <span class="math inline">\(i=1,2\)</span>. Plot the estimated probabilities for the state 1 for every <span class="math inline">\(t\)</span>.</p>
+<p>Use your functions for computing the forward and backward algorithms from previous tutorial to estimate <span class="math inline">\(P(X_t = i \mid Y_{1:T} = y_{1:T})\)</span> for every time <span class="math inline">\(t=1,\ldots, T\)</span> and every state <span class="math inline">\(i=1,2\)</span>. Plot the estimated probabilities for the state 1 for every <span class="math inline">\(t\)</span>.</p>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="do">#################################################</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="do">### Include your code for local decoding here </span><span class="al">###</span></span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="do">#################################################</span></span></code></pre></div>

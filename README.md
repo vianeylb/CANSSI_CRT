@@ -2,7 +2,7 @@ First Annual Meeting of the The Canadian Statistical Sciences Institute (CANSSI)
 
 __Advancing Statistical Methods for the Analysis of Complex Biologging Data Collected from Humans and Animals__
 
-PIs: Dr. Vianey Leos Barajas (University of Toronto (UofT)) & Dr. Marie Auger-Méthé (University of British Columbia (UBC))
+__PIs__: Dr. Vianey Leos Barajas (University of Toronto (UofT)) & Dr. Marie Auger-Méthé (University of British Columbia (UBC))
 
 _Location_: Department of Statistical Sciences at the UofT
 

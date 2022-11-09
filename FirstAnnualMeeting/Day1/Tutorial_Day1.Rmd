@@ -85,31 +85,37 @@ f(y_t \mid X_t = 2) &\sim Poisson(\lambda_2 = 10).
 
 ## Let's get to do some code! (First part)
 
-**1a)** A 2-state Markov chain with delta and t.p.m. provided previously
+**1a)** A 2-state Markov chain with pi and t.p.m. provided previously
 
 ```{r}
 
 # Initial distribution
-#delta = 
+pi = c(2/3,1/3)
 
 # Transition probability matrix
-#Gamma.matrix = 
+Gamma.matrix = matrix(c(.9,.2,.1,.8),2,2)
 
 ```
 
 ```{r}
 # Number of times to consider
 ntimes <- 100
-#state_seq <- 
+state_seq <- c()
 
 set.seed(10)
 # The function sample() could be useful to simulate the initial distribution!
-#state_seq[1] <- 
+state_seq[1] <- sample(1:2, 1, prob = pi)
 
 ########################################
 ### Generate the state sequence here ###
 ########################################
 set.seed(20)
+
+for (i in 2:ntimes) {
+  state_seq <- c(state_seq, sample(1:2, 1, prob = Gamma.matrix[state_seq[i-1], ]))
+}
+
+state_seq
 
 ```
 
@@ -121,6 +127,7 @@ set.seed(20)
 ### Include your code for visualizing your sequence of observations here ###
 ############################################################################
 
+plot(x = 1:ntimes, y = state_seq, type = "s", main = "State sequence", xlab = "Time", ylab = "state")
 
 ```
 
@@ -136,7 +143,13 @@ lambda = c(3,10)
 ### Generate your sequence of observations here ###
 ###################################################
 set.seed(30)
-#obs_seq <-
+obs_seq <- c()
+
+for (i in 1:ntimes) {
+  obs_seq <- c(obs_seq, rpois(1, lambda[state_seq[i]]))
+}
+
+obs_seq
 
 ``` 
 
@@ -147,6 +160,10 @@ set.seed(30)
 ############################################################################
 ### Include your code for visualizing your sequence of observations here ###
 ############################################################################
+
+plot(obs_seq,type="l")
+abline(h=3)
+abline(h=10)
 
 ```
 
@@ -180,8 +197,8 @@ More formally, for each $t=0,\ldots,T$, let's define the vector
 where $w_t = \sum_i = \alpha_{i,t} = \alpha_t 1'$, and define $w_0 = 1$, $\alpha_0 = \pi$. It follows from the definition of $\phi_t$ and $w_t$ the following properties:
 
 \begin{align*}
-  w_0 = \alpha_0 1' &= \delta 1' = 1\\
-  \phi_0 &= \delta\\
+  w_0 = \alpha_0 1' &= \pi 1' = 1\\
+  \phi_0 &= \pi\\
   w_t\phi_t &= w_{t-1}\phi_{t-1} \Gamma P(y_t)\\
   \mathcal{L}(\eta) = \alpha_T 1' &= w_T (\phi_T 1') = w_T.
 \end{align*}
@@ -211,6 +228,30 @@ Compute the log-likelihood using the scale vector strategy.
 ### Include your function that computes the forward algorithm for any t here ###
 ################################################################################
 
+# Function that computes the forward algorithm for any t
+
+forward_algorithm = function(observations,time,init = pi,tpm=Gamma.matrix,parameters=lambda){
+  
+  # This is for time t = 1
+  alpha = init %*% diag(dpois(observations[1],parameters))
+  
+
+  #Alternative way of computing alpha for t = 1
+  #alpha = init * dpois(observations[1],parameters)
+  
+  if(time > 1){
+    for (i in 2:time) {
+      
+      alpha = alpha %*% tpm%*%diag(dpois(observations[i],parameters))
+        
+      #Alternative way of computing alpha for t > 1
+      #alpha = alpha %*% tpm*dpois(observations[i],parameters)
+    }
+  }
+  return(alpha)
+}
+
+
 ```
 
 
@@ -221,6 +262,34 @@ Compute the log-likelihood using the scale vector strategy.
 ############################################################################################
 ### Include your fct that computes the log-likehood using the scale vector strategy here ###
 ############################################################################################
+
+### Function that computes the forward algorithm in the logarithm scale for any t
+
+log_forward_algorithm = function(observations,time,init = pi,tpm=Gamma.matrix,parameters=lambda){
+  
+  alpha = init*dpois(observations[1],lambda)
+  
+  # log(alpha) for time t = 1
+  lscale <- log(sum(alpha))
+  alpha <- alpha/sum(alpha)
+  
+  # For time t > 1, we have that:
+  for (i in 2:time) {
+    alpha <- alpha %*% tpm%*%diag(dpois(observations[i],lambda))
+    
+    #Alternative way of computing alpha for t > 1
+    #alpha <- alpha %*% tpm*dpois(observations[i],lambda)
+    
+    lscale <- lscale+log(sum(alpha))
+    alpha <- alpha/sum(alpha)
+  }
+  
+  return(lscale)
+
+}
+
+log_forward_algorithm(obs_seq,ntimes)
+
 
 ```
 

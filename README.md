@@ -4,7 +4,7 @@ __Advancing Statistical Methods for the Analysis of Complex Biologging Data Coll
 
 __PIs__: Dr. Vianey Leos Barajas (University of Toronto (UofT)) & Dr. Marie Auger-Méthé (University of British Columbia (UBC))
 
-_Location_: Department of Statistical Sciences at the UofT
+_Location_: Department of Statistical Sciences at UofT
 
 _Dates_: Nov 8-10, 2022
 

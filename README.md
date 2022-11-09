@@ -2,7 +2,9 @@ First Annual Meeting of the The Canadian Statistical Sciences Institute (CANSSI)
 
 __Advancing Statistical Methods for the Analysis of Complex Biologging Data Collected from Humans and Animals__
 
-_Location_: Department of Statistical Sciences at the University of Toronto (UofT)
+PIs: Dr. Vianey Leos Barajas (University of Toronto (UofT)) & Dr. Marie Auger-Méthé (University of British Columbia (UBC))
+
+_Location_: Department of Statistical Sciences at the UofT
 
 _Dates_: Nov 8-10, 2022
 
@@ -30,7 +32,7 @@ _Day 3 (morning)_:
 _Day 3 (afternoon)_: 
 
 Panel discussion on the four statistical topics of the CRT project
-- Accounting for individuality (led by Fanny Dupont - University of British Columbia)
+- Accounting for individuality (led by Fanny Dupont - UBC)
 - Including feedback mechanisms to understand the dependence between physiology and movement (led by Marco Gallegos Herrada - UofT)
 - Incorporating labelled data (led by Natasha Klappstein - Dalhousie University)
 - Inference and computation (led by Arturo Esquivel Fuente - UofT)

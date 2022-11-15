@@ -58,6 +58,14 @@ states_seq = gdata$states
 obs_seq = gdata$observations
 ntimes = 100
 
+# Initial distribution
+pi_ = c(2/3,1/3)
+
+# Transition probability matrix
+Gamma.matrix = matrix(c(.9,.2,.1,.8),2,2)
+
+lambda = c(3,10)
+
 source("aux-fcts.R")
 
 ```
@@ -108,6 +116,46 @@ Using the approach shown above, compute the likelihood of the sequence with miss
 ### Enter your code for computing the likelihood here ###
 #########################################################
 
+obs_is_missing = is.na(obs_seq_missing)
+
+forward_algorithm_missing = function(observations,time,init = pi,tpm=Gamma.matrix,parameters=lambda){
+  
+  # This is for time t = 1
+  
+  obs_is_missing = is.na(obs_seq_missing)
+  
+  if(obs_is_missing[1]){
+    alpha = init * c(1,1)
+  } else{
+    alpha = init * dpois(observations[1],parameters)
+  }
+  
+  
+  #Alternative way of computing alpha for t =1
+  #alpha = init %*% diag(dpois(observations[1],parameters))
+  
+  if(time > 1){
+    for (i in 2:time) {
+      if(obs_is_missing[i]){
+        
+        alpha = alpha %*% tpm*c(1,1)
+        
+      } else{
+        
+        alpha = alpha %*% tpm*dpois(observations[i],parameters)
+      }
+      
+      #Alternative way of computing alpha for t > 1
+      #alpha = alpha %*% tpm%*%diag(dpois(observations[i],parameters))
+    }
+  }
+  return(alpha)
+}
+
+
+log(sum(forward_algorithm_missing(obs_seq_missing,ntimes)))
+
+
 ```
 
 ## The likelihood when observations are interval-censored
@@ -135,6 +183,36 @@ Compute the likelihood of the observations given the information above, and the 
 ### Compute the likelihood when given interval censoring here ###
 #################################################################
 
+id_censored = c(1,3,8)
+obs_is_censored = 1:10 %in% id_censored
+obs_is_censored
+
+names(obs_is_censored) = paste0("x",1:10)
+names(obs_is_censored[1])
+
+intervals = list(x1 = ppois(5,lambda),
+            x3 = ppois(3,lambda) - ppois(1,lambda),
+            x8 = 1-ppois(10,lambda))
+
+
+if(obs_is_censored[1]){
+  interval_xi = names(obs_is_censored[1])
+  alpha = pi_ * intervals[[interval_xi]]
+  } else{
+    alpha = pi_ * dpois(obs_seq[1],lambda)
+    }
+
+for(i in 2:10){
+  if(obs_is_censored[i]){
+    interval_xi = names(obs_is_censored[i])
+    alpha = alpha %*% Gamma.matrix * intervals[[interval_xi]]
+  } else{
+    alpha = alpha %*% Gamma.matrix*dpois(obs_seq[i],lambda)
+    
+  }
+}
+
+alpha
 
 ```
 
@@ -177,9 +255,9 @@ theta.star = c(qlogis(dgammas),log(lambdas))
 ```
 
 
-```{r,message=FALSE}
+```{r}
 
-mod = nlm(log.likelihood,theta.star,observations=obs_seq)
+mod = nlm(log.likelihood,theta.star,observations=obs_seq,print.level = 2)
 
 c(plogis(mod$estimate[1:2]),exp(mod$estimate[3:4]))
 
@@ -220,7 +298,49 @@ print(fit)
 
 ### Tip: Compute (beta_t)' it's easier than computing beta_t!
 
-``` 
+# Function that computes the backward algorithm (here we are calculating beta')
+
+backward_algorithm = function(observations,time,
+                              total.time = ntimes,init = pi,tpm=Gamma.matrix,parameters=lambda){
+
+  # This is for time t = T
+  beta = rep(1,2)
+
+  # For t < T we can calculate beta in the following way
+  if(time < total.time){
+    for (i in total.time:(time+1)) {
+      
+      beta = tpm%*%diag(dpois(observations[i],parameters))%*%beta
+    
+    }
+  }
+
+  return(beta)
+
+}
+
+
+### Alternative way to compute the backward algorithm
+
+backward_algorithm_alternative = function(observations,
+                                          time,total.time = ntimes,
+                                          init = pi,tpm=Gamma.matrix,parameters=lambda){
+  
+  # This is enought for t = T
+  beta = diag(2)
+  
+  if(time < total.time){
+    for (i in (time+1):total.time) {
+      
+      beta = beta%*%tpm%*%diag(dpois(observations[i],parameters))
+      
+    }
+  }
+  beta = beta%*%c(1,1)
+  return(beta)
+}
+```
+
 
 **4b)** Show that, for $t=43$, in effect $\alpha_{43}\beta'_{43} = L_T$.
 
@@ -229,6 +349,15 @@ print(fit)
 ##############################
 ### Include your code here ###
 ##############################
+
+forward_algorithm(obs_seq,43)
+alpha43 = forward_algorithm(obs_seq,43)
+beta_transpose43 =backward_algorithm(obs_seq,43)
+
+alpha43%*%beta_transpose43
+
+log(alpha43%*%beta_transpose43)
+
 
 ```
 
@@ -257,6 +386,35 @@ Use your functions for computing the forward and backward algorithms from previo
 #################################################
 ### Include your code for local decoding here ###
 #################################################
+
+library(ggplot2)
+
+alpha_t = matrix(NA,ntimes,2)
+beta_t = matrix(NA,ntimes,2)
+
+for(i in 1:ntimes){
+  alpha_t[i,] = forward_algorithm(obs_seq,i)
+  beta_t[i,] = backward_algorithm(obs_seq,i)
+
+}
+
+### Likelihood
+L_T = sum(forward_algorithm(obs_seq,ntimes))
+C = alpha_t*beta_t/L_T
+colnames(C) = c("state1","state2")
+
+C = as.data.frame(C)
+
+ggplot(C,aes(x=1:ntimes,y=state1)) + geom_point() + xlab("Time") + ylab("P(C_t = 1 | X_1,...,X_T)")
+
+
+```
+
+```{r}
+
+C_local_max = apply(C,1,function(x) which(max(x) == x))
+ggplot(C,aes(x=1:ntimes,y=C_local_max)) + geom_step()
+ggplot(C,aes(x=1:ntimes,y=C_local_max)) + geom_point()
 
 ```
 

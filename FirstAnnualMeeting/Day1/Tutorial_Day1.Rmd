@@ -41,7 +41,7 @@ The primary learning objectives in this first tutorial are to:
   4. Implementation of the forward algorithm for the computation of the probabilities
   
   \begin{align*}
-  \alpha_{j,t} &= P(Y_{1:t}=y_{1:t} \mid X_t = j),\\ 
+  \alpha_{j,t} &= P(Y_{1:t}=y_{1:t} , X_t = j),\\ 
   \end{align*} 
   
   5. The computation of the likelihood evaluated in $\eta$, $\mathcal{L}(\eta)$.
